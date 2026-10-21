@@ -1,0 +1,20 @@
+# IntelliJ IDEA: archivos locales del usuario
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+**/.idea/shelf/
+**/.idea/httpRequests/
+
+# Salidas de compilacion
+**/out/
+**/build/
+**/.gradle/
+**/.kotlin/
+*.class
+
+# Archivos locales del sistema
+.DS_Store
+Thumbs.db
+
+# Copias de entregas comprimidas (mantener codigo fuente en Git)
+*.zip
+*.rar
