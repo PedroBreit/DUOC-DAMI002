@@ -30,3 +30,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+# Configuracion local de IntelliJ IDEA
+.idea/
+out/
+
+# Bibliotecas descargadas localmente
+lib/
