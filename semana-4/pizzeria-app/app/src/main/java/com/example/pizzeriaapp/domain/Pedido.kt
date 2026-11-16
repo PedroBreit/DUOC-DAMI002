@@ -12,6 +12,7 @@ class Pedido(
     val fecha: LocalDate = LocalDate.now()
 ) {
 
+    // Estado inicial de todo pedido.
     var estado: EstadoPedido = EstadoPedido.EN_PREPARACION
         private set
 
@@ -21,11 +22,12 @@ class Pedido(
         }
     }
 
+    // Calcula los precios, descuentos e impuestos.
     fun calcularTotal(): Totales {
         return calcularTotales(productos, fecha)
     }
 
-    // Desestructuracion
+    // Permite desestructurar un pedido.
     operator fun component1(): Cliente = cliente
 
     operator fun component2(): List<Producto> = productos
@@ -33,7 +35,7 @@ class Pedido(
     operator fun component3(): Int =
         calcularTotal().total
 
-    // Sobrecarga del operador +
+    // Permite unir pedidos del mismo cliente y fecha.
     operator fun plus(otro: Pedido): Pedido {
         require(cliente == otro.cliente) {
             "Los pedidos deben ser del mismo cliente"
@@ -62,6 +64,7 @@ class Pedido(
         )
     }
 
+    // Autoriza solamente los cambios de estado consecutivos.
     fun cambiarEstado(nuevoEstado: EstadoPedido) {
         val permitido = when (estado) {
             EstadoPedido.EN_PREPARACION ->
@@ -70,7 +73,10 @@ class Pedido(
             EstadoPedido.LISTO ->
                 nuevoEstado == EstadoPedido.EN_CAMINO
 
-            EstadoPedido.EN_CAMINO -> false
+            EstadoPedido.EN_CAMINO ->
+                nuevoEstado == EstadoPedido.ENTREGADO
+
+            EstadoPedido.ENTREGADO -> false
         }
 
         require(permitido) {
@@ -80,6 +86,7 @@ class Pedido(
         estado = nuevoEstado
     }
 
+    // Genera un resumen textual del pedido.
     fun resumen(): String {
         val totales = calcularTotal()
 

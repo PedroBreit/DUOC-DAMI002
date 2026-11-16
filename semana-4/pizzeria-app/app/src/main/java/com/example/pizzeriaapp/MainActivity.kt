@@ -48,6 +48,11 @@ fun PizzaAppPrincipal() {
     var estadoRevision by remember { mutableIntStateOf(0) }
     var numeroPedido by remember { mutableIntStateOf(1) }
 
+    // Repartidor asociado al pedido actual.
+    var repartidorAsignado by remember {
+        mutableStateOf<Repartidor?>(null)
+    }
+
     // Conserva inventario y reglas del negocio durante el uso.
     val gestion = remember { GestionPizzeria() }
     val fecha = remember { LocalDate.now() }
@@ -740,6 +745,7 @@ fun PizzaAppPrincipal() {
                                         )
 
                                     aviso = if (repartidor != null) {
+                                        repartidorAsignado = repartidor
                                         "Repartidor asignado: " +
                                                 repartidor.nombre
                                     } else {
@@ -772,18 +778,24 @@ fun PizzaAppPrincipal() {
                                         color = TextoPrincipal)
                                     Text(if (repartidor.disponible) "Disponible" else "Ocupado",
                                         color = TextoSecundario)
-                                    if (!repartidor.disponible) {
+                                    if (
+                                        pedido.estado == EstadoPedido.EN_CAMINO &&
+                                        repartidor === repartidorAsignado &&
+                                        !repartidor.disponible
+                                    ) {
                                         OutlinedButton(onClick = {
+                                            // Finalizar pedido y liberar repartidor.
+                                            pedido.cambiarEstado(EstadoPedido.ENTREGADO)
                                             repartidor.marcarEntregado()
                                             estadoRevision++
-                                            aviso = "${repartidor.nombre} quedó disponible."
+                                            aviso = "Pedido entregado. ${repartidor.nombre} quedó disponible."
                                         }) { Text("Entregado") }
                                     }
                                 }
                             }
                         }
 
-                        if (pedido.estado == EstadoPedido.EN_CAMINO) {
+                        if (pedido.estado == EstadoPedido.ENTREGADO) {
                             Button(
                                 onClick = {
                                     pedidoActual = null
