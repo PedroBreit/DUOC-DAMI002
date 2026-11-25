@@ -8,39 +8,63 @@ import com.example.pizzeriaapp.domain.Cliente
 import com.example.pizzeriaapp.domain.Pedido
 import com.example.pizzeriaapp.logic.RepositorioPizzeria
 import com.example.pizzeriaapp.logic.ResumenPizzeria
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// Semana 5: conexion entre la logica y la interfaz.
 class PizzeriaViewModel : ViewModel() {
 
     private val repositorio = RepositorioPizzeria()
 
-    // Estado observable del resumen.
-    private val _resumen = MutableLiveData(
-        ResumenPizzeria()
-    )
+    // Datos observables del resumen.
+    private val _resumen =
+        MutableLiveData(ResumenPizzeria())
 
     val resumen: LiveData<ResumenPizzeria> = _resumen
 
-    // Lista observable de clientes.
-    private val _clientes = MutableLiveData<List<Cliente>>(
-        emptyList()
-    )
+    // Clientes registrados.
+    private val _clientes =
+        MutableLiveData<List<Cliente>>(emptyList())
 
     val clientes: LiveData<List<Cliente>> = _clientes
 
-    // Lista observable de pedidos.
-    private val _pedidos = MutableLiveData<List<Pedido>>(
-        emptyList()
-    )
+    // Pedidos registrados.
+    private val _pedidos =
+        MutableLiveData<List<Pedido>>(emptyList())
 
     val pedidos: LiveData<List<Pedido>> = _pedidos
 
+    // Estado de carga.
+    private val _cargando =
+        MutableLiveData(false)
+
+    val cargando: LiveData<Boolean> = _cargando
+
+    // Mensaje contextual.
+    private val _mensajeCarga =
+        MutableLiveData("")
+
+    val mensajeCarga: LiveData<String> = _mensajeCarga
+
+    // Manejo de errores.
+    private val _errorCarga =
+        MutableLiveData("")
+
+    val errorCarga: LiveData<String> = _errorCarga
+
+    // Control de consultas simultaneas.
+    private var trabajoCarga: Job? = null
+
+    // Identificador de la solicitud vigente.
+    private var solicitudCarga = 0L
+
     init {
+
         cargarDatosIniciales()
     }
 
-    // Conserva los clientes originales de Semana 4.
+    // Carga los clientes originales.
     private fun cargarDatosIniciales() {
 
         repositorio.registrarCliente(
@@ -59,48 +83,144 @@ class PizzeriaViewModel : ViewModel() {
             )
         )
 
-        actualizarDatos()
+        actualizarDatos(
+            "Cargando datos iniciales..."
+        )
     }
 
-    // Registra un cliente y actualiza la interfaz.
-    fun registrarCliente(cliente: Cliente): Boolean {
+    // Registro de clientes.
+    fun registrarCliente(
+        cliente: Cliente
+    ): Boolean {
 
-        val registrado = repositorio.registrarCliente(cliente)
+        val registrado =
+            repositorio.registrarCliente(cliente)
 
         if (registrado) {
-            actualizarDatos()
+
+            actualizarDatos(
+                "Actualizando clientes..."
+            )
         }
 
         return registrado
     }
 
-    // Registra un pedido confirmado.
-    fun registrarPedido(pedido: Pedido): Boolean {
+    // Registro de pedidos.
+    fun registrarPedido(
+        pedido: Pedido
+    ): Boolean {
 
-        val registrado = repositorio.registrarPedido(pedido)
+        val registrado =
+            repositorio.registrarPedido(pedido)
 
         if (registrado) {
-            actualizarDatos()
+
+            cargarPedidos()
         }
 
         return registrado
     }
 
-    // Obtiene el siguiente numero disponible.
+    // Consulta de clientes.
+    fun cargarClientes() {
+
+        actualizarDatos(
+            "Cargando clientes..."
+        )
+    }
+
+    // Consulta de pedidos.
+    fun cargarPedidos() {
+
+        actualizarDatos(
+            "Actualizando pedidos..."
+        )
+    }
+
+    // Generacion del resumen.
+    fun generarResumen() {
+
+        actualizarDatos(
+            "Generando resumen..."
+        )
+    }
+
+    // Siguiente numero de pedido.
     fun siguienteNumeroPedido(): Int {
+
         return repositorio.siguienteNumeroPedido()
     }
 
-    // Actualiza los datos observados por Jetpack Compose.
-    private fun actualizarDatos() {
+    // Semana 6: actualizacion asincrona.
+    private fun actualizarDatos(
+        mensaje: String
+    ) {
 
-        viewModelScope.launch {
+        // Identifica la nueva solicitud.
+        val solicitudActual = ++solicitudCarga
 
-            _clientes.value = repositorio.obtenerClientes()
+        // Cancela una consulta anterior.
+        trabajoCarga?.cancel()
 
-            _pedidos.value = repositorio.obtenerPedidos()
+        _cargando.value = true
+        _mensajeCarga.value = mensaje
+        _errorCarga.value = ""
 
-            _resumen.value = repositorio.obtenerResumen()
+        trabajoCarga = viewModelScope.launch {
+
+            try {
+
+                // Demora demostrativa para visualizar
+                // el progreso del repositorio en memoria.
+                delay(1200)
+
+                // Consulta al modulo data.
+                val clientesActualizados =
+                    repositorio.obtenerClientes()
+
+                val pedidosActualizados =
+                    repositorio.obtenerPedidos()
+
+                val resumenActualizado =
+                    repositorio.obtenerResumen()
+
+                // Publica solo los datos de la
+                // solicitud vigente.
+                if (solicitudActual == solicitudCarga) {
+
+                    _clientes.value =
+                        clientesActualizados
+
+                    _pedidos.value =
+                        pedidosActualizados
+
+                    _resumen.value =
+                        resumenActualizado
+                }
+
+            } catch (e: CancellationException) {
+
+                // Respeta la cancelacion de corrutinas.
+                throw e
+
+            } catch (e: Exception) {
+
+                if (solicitudActual == solicitudCarga) {
+
+                    _errorCarga.value =
+                        "No fue posible cargar los datos."
+                }
+
+            } finally {
+
+                // Una consulta antigua no puede
+                // finalizar una consulta mas reciente.
+                if (solicitudActual == solicitudCarga) {
+
+                    _cargando.value = false
+                }
+            }
         }
     }
 }

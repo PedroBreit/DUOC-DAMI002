@@ -17,7 +17,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -53,19 +54,25 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
 
+    // Semana 6: Animaciones
+    implementation("androidx.compose.animation:animation")
+
+    // Semana 6: Iconos del menu interactivo
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
     // Android Core y Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // ViewModel - Semana 5
+    // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
-    // LiveData - Semana 5
+    // LiveData
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     implementation("androidx.compose.runtime:runtime-livedata")
 
-    // Kotlin Coroutines - Semana 5
+    // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // Pruebas unitarias
@@ -81,6 +88,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Compatibilidad con versiones anteriores de Android
+    // Compatibilidad con Android
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
